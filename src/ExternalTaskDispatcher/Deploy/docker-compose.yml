@@ -31,10 +31,12 @@ services:
     #   - WAIT_FOR_TIMEOUT=60
 
   external-task-dispatcher:
-    image: onvz/external-task-dispatcher:1.0
+    image: edwinvw/external-task-dispatcher:1.0
     container_name: cetd
     depends_on:
       - camunda
+    env_file:
+      - cetd-variables.env
 
 volumes:
   # sqlserverdata:

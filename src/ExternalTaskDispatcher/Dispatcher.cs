@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -200,6 +201,12 @@ namespace ExternalTaskDispatcher
             // execute request
             var content = CreateRequestContent(lockedTask);
             var response = await client.PostAsync(requestUri, content);
+
+            // handle status-code
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                throw new InvokeErrorException($"Invalid HTTP status-code {response.StatusCode}.");
+            }
 
             // handle response
             return await CreateResponseAsync(response);
