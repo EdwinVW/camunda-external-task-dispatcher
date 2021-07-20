@@ -1,0 +1,43 @@
+version: '3'
+services:
+
+  # sqlserver:
+  #   image: microsoft/mssql-server-linux:latest
+  #   container_name: sqlserver
+  #   volumes:
+  #     - sqlserverdata:/var/opt/mssql 
+  #   ports:
+  #     - "1434:1433"
+  #   environment:
+  #     - ACCEPT_EULA=Y 
+  #     - MSSQL_PID=Developer
+  #     - SA_PASSWORD=8jkGh47hnDw89Haq8LN2
+
+  camunda:
+    image: camunda/camunda-bpm-platform:latest
+    container_name: camunda
+    # depends_on: 
+    #   - sqlserver    
+    volumes:
+      - camunda:/camunda 
+    ports:
+      - "8080:8080"
+    # environment:
+    #   - DB_DRIVER=com.microsoft.sqlserver.jdbc.SQLServerDriver
+    #   - DB_URL=jdbc:sqlserver://localhost:1434/Camunda
+    #   - DB_USERNAME=sa
+    #   - DB_PASSWORD=8jkGh47hnDw89Haq8LN2
+    #   - WAIT_FOR=db:1434
+    #   - WAIT_FOR_TIMEOUT=60
+
+  external-task-dispatcher:
+    image: onvz/external-task-dispatcher:1.0
+    container_name: cetd
+    depends_on:
+      - camunda
+
+volumes:
+  # sqlserverdata:
+  #   external: true
+  camunda:
+    external: true

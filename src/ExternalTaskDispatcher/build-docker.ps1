@@ -1,0 +1,1 @@
+docker build --force-rm -t onvz/external-task-dispatcher:1.0 .
