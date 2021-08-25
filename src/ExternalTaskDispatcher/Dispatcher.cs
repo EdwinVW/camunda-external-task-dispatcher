@@ -22,10 +22,11 @@ namespace ExternalTaskDispatcher
     {
         private readonly ILogger<Dispatcher> _logger;
         private readonly IHttpClientFactory _clientFactory;
-        private string[] _topics;
+        private List<string> _topics;
         private bool _automaticTopicDiscovery;
         private long _longPollingIntervalInMs;
         private long _taskLockDurationInMs;
+        private long _topicCacheInvalidationIntervalInMin;
         private string _workerId;
         private string _camundaUrl;
         private string _apimUrl;
@@ -56,10 +57,11 @@ namespace ExternalTaskDispatcher
             //_apimKey = GetAPIMKey().Result ?? dispatcherConfig.APIMKey;
             _apimKey = dispatcherConfig.APIMKey;
             _topics = dispatcherConfig.Topics.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(t => t.Trim()).ToArray();
+                .Select(t => t.Trim()).ToList();
             _automaticTopicDiscovery = dispatcherConfig.AutomaticTopicDiscovery;
             _longPollingIntervalInMs = dispatcherConfig.LongPollingIntervalInMs;
             _taskLockDurationInMs = dispatcherConfig.TaskLockDurationInMs;
+            _topicCacheInvalidationIntervalInMin = dispatcherConfig.TopicCacheInvalidationIntervalInMin;
 
             var logBuilder = new StringBuilder();
             logBuilder.AppendLine($"Configuration:");
@@ -76,6 +78,8 @@ namespace ExternalTaskDispatcher
             logBuilder.AppendLine($"Automatic topic discovery: {_automaticTopicDiscovery}");
             logBuilder.AppendLine($"Long polling interval in ms: {_longPollingIntervalInMs}");
             logBuilder.AppendLine($"Task lock duration in ms: {_taskLockDurationInMs}");
+            logBuilder.AppendLine($"Topic cache invalidation interval in minutes: {_topicCacheInvalidationIntervalInMin}");
+
             _logger.LogInformation(logBuilder.ToString());
         }
 
@@ -89,6 +93,9 @@ namespace ExternalTaskDispatcher
                 Topics = _topics.Select(t => new FetchExternalTaskTopic(t, _taskLockDurationInMs)).ToList()
             };
 
+            // initialize topic cache invalidation timestamp
+            var lastTopicCacheInvalidationTimestamp = DateTime.Now;
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
@@ -96,7 +103,17 @@ namespace ExternalTaskDispatcher
                     // discover new topics
                     if (_automaticTopicDiscovery)
                     {
-                        _logger.LogInformation($"Start automatic topic discovery");
+                        _logger.LogDebug($"Start automatic topic discovery");
+
+                        // invalidate cache
+                        if (DateTime.Now.Subtract(lastTopicCacheInvalidationTimestamp).Minutes >= _topicCacheInvalidationIntervalInMin)
+                        {
+                            _topics.Clear();
+                            fetchInfo.Topics.Clear();
+                            _logger.LogInformation($"Topic cache invalidated.");
+                            lastTopicCacheInvalidationTimestamp = DateTime.Now;
+                        }
+
                         var tasks = await _camundaClient.ExternalTasks.Query().List();
                         if (tasks.Count > 0)
                         {
@@ -104,36 +121,62 @@ namespace ExternalTaskDispatcher
                             {
                                 if (!_topics.Contains(task.TopicName))
                                 {
-                                    _logger.LogInformation($"Discovered new topic {task.TopicName}. Adding it to the list of topics.");
+                                    _logger.LogInformation($"Discovered new topic {task.TopicName}.");
+                                    _topics.Add(task.TopicName);
                                     fetchInfo.Topics.Add(new FetchExternalTaskTopic(task.TopicName, _taskLockDurationInMs));
                                 }
                             }
                         }
                         else
                         {
-                            _logger.LogInformation($"No new topics found");
+                            _logger.LogDebug($"No new topics found");
                         }
                     }
 
                     // skip fetch & lock when no topics are known
                     if (fetchInfo.Topics.Count == 0)
                     {
-                        _logger.LogInformation($"No topics known to fetch & lock. Delaying for 10 seconds...");
+                        _logger.LogDebug($"No topics known to fetch & lock. Delaying for 10 seconds...");
                         await Task.Delay(10000);
                         continue;
                     }
 
-                    _logger.LogInformation($"Start fetch & lock");
+                    _logger.LogDebug($"Start fetch & lock");
 
                     var lockedTasks = await _camundaClient.ExternalTasks.FetchAndLock(fetchInfo);
-                    _logger.LogInformation($"Found {lockedTasks.Count} tasks");
+                    _logger.LogDebug($"Found {lockedTasks.Count} tasks");
                     foreach (var lockedTask in lockedTasks)
                     {
-                        _logger.LogInformation($"Handling {lockedTask.TopicName} task with Id: {lockedTask.Id}");
+                        _logger.LogInformation($"Received external task for topic '{lockedTask.TopicName}' with Id '{lockedTask.Id}'.");
 
+                        // determine task type (Service, Message, Signal)
+                        var extTaskType = ExternalTaskType.Unknown;
+                        var extTaskTypeString = lockedTask.TopicName.Split('-').FirstOrDefault();
+                        Enum.TryParse<ExternalTaskType>(extTaskTypeString, out extTaskType);
+                        _logger.LogDebug($"External task with Id '{lockedTask.Id}' has type '{extTaskType}'.");
+
+                        // skip unknown task types
+                        if (extTaskType == ExternalTaskType.Unknown)
+                        {
+                            string errorMessage = $"External task with Id '{lockedTask.Id}' has unknown task type '{extTaskTypeString}'. Failing task.";
+                            _logger.LogInformation(errorMessage);
+                            await HandleFailureAsync(lockedTask, errorMessage, 0);
+                            continue;
+                        }
+
+                        // skip unsupported task types
+                        if (extTaskType == ExternalTaskType.Message || extTaskType == ExternalTaskType.Signal)
+                        {
+                            string errorMessage = $"External task with Id '{lockedTask.Id}' has unsupported task type '{extTaskType}'. Failing task.";
+                            _logger.LogInformation(errorMessage);
+                            await HandleFailureAsync(lockedTask, errorMessage, 0);
+                            continue;
+                        }
+
+                        // handle task
                         try
                         {
-                            var outputVariables = await HandleTaskAsync(lockedTask);
+                            var outputVariables = await HandleServiceTaskAsync(lockedTask);
                             var complete = new CompleteExternalTask
                             {
                                 WorkerId = this._workerId,
@@ -167,33 +210,9 @@ namespace ExternalTaskDispatcher
             }
         }
 
-        private async Task HandleFailureAsync(LockedExternalTask lockedTask, Exception ex)
+        private async Task<Dictionary<string, VariableValue>> HandleServiceTaskAsync(LockedExternalTask lockedTask)
         {
-            _logger.LogInformation($"HandleFaiure for {lockedTask.TopicName} task with Id: {lockedTask.Id}");
-
-            try
-            {
-                int retries = lockedTask.Retries ?? 5;
-                var failure = new ExternalTaskFailure
-                {
-                    WorkerId = this._workerId,
-                    ErrorMessage = ex.Message,
-                    ErrorDetails = ex.ToString(),
-                    Retries = retries - 1,
-                    RetryTimeout = 5000
-                };
-                await _camundaClient.ExternalTasks[lockedTask.Id].HandleFailure(failure);
-
-            }
-            catch (Exception handleEx)
-            {
-                _logger.LogError(handleEx, $"Error while handling faiure for {lockedTask.TopicName} task with Id: {lockedTask.Id}");
-            }
-        }
-
-        private async Task<Dictionary<string, VariableValue>> HandleTaskAsync(LockedExternalTask lockedTask)
-        {
-            _logger.LogInformation($"Handle task {lockedTask.TopicName}");
+            _logger.LogInformation($"Handling external Service task for topic '{lockedTask.TopicName}' with Id '{lockedTask.Id}'.");
 
             string requestUri = $"{_apimUrl}/{lockedTask.TopicName.ToLowerInvariant()}?taskId={lockedTask.Id}";
             var client = _clientFactory.CreateClient();
@@ -244,6 +263,39 @@ namespace ExternalTaskDispatcher
 
             return apiResponse.Variables;
         }
+
+        private async Task HandleFailureAsync(LockedExternalTask lockedTask, string errorMessage, int retries = 5)
+        {
+            await HandleFailureAsync(lockedTask, errorMessage, string.Empty, retries);
+        }
+
+        private async Task HandleFailureAsync(LockedExternalTask lockedTask, Exception ex, int retries = 5)
+        {
+            await HandleFailureAsync(lockedTask, ex.Message, ex.ToString(), retries);
+        }
+
+        private async Task HandleFailureAsync(LockedExternalTask lockedTask, string errorMessage, string errorDetails, int retries = 5)
+        {
+            _logger.LogDebug($"HandleFailure for {lockedTask.TopicName} task with Id: {lockedTask.Id}");
+
+            try
+            {
+                var failure = new ExternalTaskFailure
+                {
+                    WorkerId = this._workerId,
+                    ErrorMessage = errorMessage,
+                    ErrorDetails = errorDetails,
+                    Retries = lockedTask.Retries != null ? lockedTask.Retries.Value - 1 : retries,
+                    RetryTimeout = 5000
+                };
+                await _camundaClient.ExternalTasks[lockedTask.Id].HandleFailure(failure);
+
+            }
+            catch (Exception handleEx)
+            {
+                _logger.LogError(handleEx, $"Error while handling failure for {lockedTask.TopicName} task with Id: {lockedTask.Id}");
+            }
+        }        
 
         private async Task<string> GetAPIMKey()
         {

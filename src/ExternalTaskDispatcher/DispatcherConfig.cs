@@ -13,5 +13,6 @@ namespace ExternalTaskDispatcher
         public bool AutomaticTopicDiscovery { get; set; }
         public long LongPollingIntervalInMs { get; set; }
         public long TaskLockDurationInMs { get; set; }
+        public long TopicCacheInvalidationIntervalInMin { get; set; }
     }
 }
