@@ -190,7 +190,7 @@ public class Dispatcher : BackgroundService
         if (DateTime.Now.Subtract(_lastTopicCacheInvalidationTimestamp).Minutes >= _dispatcherConfig.TopicCacheInvalidationIntervalInMin)
         {
             _topics.Clear();
-            _logger.LogInformation($"Topic cache invalidated.");
+            _logger.LogDebug($"Topic cache invalidated.");
             _lastTopicCacheInvalidationTimestamp = DateTime.Now;
         }
 
@@ -201,7 +201,7 @@ public class Dispatcher : BackgroundService
             {
                 if (!_topics.Contains(task.TopicName))
                 {
-                    _logger.LogInformation($"Discovered new topic {task.TopicName}.");
+                    _logger.LogDebug($"Discovered new topic {task.TopicName}.");
                     _topics.Add(task.TopicName);
                 }
             }
