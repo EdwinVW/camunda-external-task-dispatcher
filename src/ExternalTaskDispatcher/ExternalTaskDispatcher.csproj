@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
     <UserSecretsId>dotnet-ExternalTaskDispatcher-5FB3227F-1C16-4801-A228-746198369C85</UserSecretsId>
   </PropertyGroup>
 

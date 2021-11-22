@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_17zm75f" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.9.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="ExtTaskTest2" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0e6cc0u</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0e6cc0u" sourceRef="StartEvent_1" targetRef="GetCustomerDetails" />
+    <bpmn:endEvent id="Event_1igrir0">
+      <bpmn:incoming>Flow_0kgu60c</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0kgu60c" sourceRef="GetCustomerDetails" targetRef="Event_1igrir0" />
+    <bpmn:serviceTask id="GetCustomerDetails" name="Get Customer Details" camunda:type="external" camunda:topic="Svc-GetCustomerInfo">
+      <bpmn:incoming>Flow_0e6cc0u</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kgu60c</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmn:signal id="Signal_1rwicqt" name="Sig-Polisvoorwaarden-Gewijzigd" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ExtTaskTest2">
+      <bpmndi:BPMNEdge id="Flow_0e6cc0u_di" bpmnElement="Flow_0e6cc0u">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kgu60c_di" bpmnElement="Flow_0kgu60c">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="582" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0v1vnw9_di" bpmnElement="GetCustomerDetails">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1igrir0_di" bpmnElement="Event_1igrir0">
+        <dc:Bounds x="582" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

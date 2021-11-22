@@ -1,1 +1,1 @@
-docker-compose down
+docker-compose -p Camunda down

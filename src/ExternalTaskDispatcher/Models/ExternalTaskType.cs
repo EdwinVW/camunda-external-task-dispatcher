@@ -1,10 +1,12 @@
-namespace ExternalTaskDispatcher.Models
+namespace ExternalTaskDispatcher.Models;
+
+/// <summary>
+/// The list of available external task types.
+/// </summary>
+public enum ExternalTaskType
 {
-    public enum ExternalTaskType
-    {
-        Unknown,
-        Service,
-        Message,
-        Signal
-    }
+    Unknown,
+    Service,
+    Message,
+    Signal
 }

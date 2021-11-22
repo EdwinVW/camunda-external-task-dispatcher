@@ -1,11 +1,17 @@
-using System.Collections.Generic;
-using Camunda.Api.Client;
+namespace ExternalTaskDispatcher.Models;
 
-namespace ExternalTaskDispatcher.Models
+/// <summary>
+/// Represents a response from an API call.
+/// </summary>
+public class APIResponse
 {
-    public class APIResponse
-    {
-        public string TaskId { get; set; }
-        public Dictionary<string, VariableValue> Variables { get; set; }
-    }
+    /// <summary>
+    /// The unique Id of the external task.
+    /// </summary>
+    public string? TaskId { get; set; }
+
+    /// <summary>
+    /// The variables returned from the API call.
+    /// </summary>
+    public Dictionary<string, VariableValue>? Variables { get; set; }
 }
