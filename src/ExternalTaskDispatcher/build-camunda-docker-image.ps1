@@ -1,0 +1,1 @@
+docker build --force-rm -t edwinvw/camunda-bpm-platform:1.0 ./Camunda

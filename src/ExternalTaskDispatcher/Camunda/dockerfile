@@ -1,0 +1,6 @@
+FROM camunda/camunda-bpm-platform:latest
+
+# remove example content
+RUN rm -r /camunda/webapps/camunda-invoice
+RUN rm -r /camunda/webapps/h2
+RUN rm -r /camunda/webapps/examples
