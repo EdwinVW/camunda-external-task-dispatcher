@@ -25,6 +25,7 @@ public class Dispatcher : BackgroundService
         _logger = logger;
         _clientFactory = httpClientFactory;
         _dispatcherConfig = ReadConfig(configuration);
+        _dispatcherConfig.Log(logger);
         _topics = _dispatcherConfig.Topics;
         _camundaClient = CamundaClient.Create(_dispatcherConfig.CamundaUrl);
         _serializerSettings = new JsonSerializerSettings
@@ -43,26 +44,7 @@ public class Dispatcher : BackgroundService
         configuration.GetSection("Dispatcher").Bind(dispatcherConfig);
 
         //_apimKey = GetAPIMKey().Result ?? dispatcherConfig.APIMKey;
-
-        var logBuilder = new StringBuilder();
-        logBuilder.AppendLine($"Configuration:");
-        logBuilder.AppendLine(new string('-', 35));
-        logBuilder.AppendLine($"Worker Id: {dispatcherConfig.WorkerId}");
-        logBuilder.AppendLine($"Camunda Url: {dispatcherConfig.CamundaUrl}");
-        logBuilder.AppendLine($"APIM Url: {dispatcherConfig.APIMUrl}");
-        logBuilder.AppendLine($"APIM Key: {new string('*', dispatcherConfig.APIMKey.Length)}");
-        logBuilder.AppendLine($"Pre-configured Topics:");
-        foreach (string topic in dispatcherConfig.Topics)
-        {
-            logBuilder.AppendLine($"- {topic}");
-        }
-        logBuilder.AppendLine($"Automatic topic discovery: {dispatcherConfig.AutomaticTopicDiscovery}");
-        logBuilder.AppendLine($"Long polling interval in ms: {dispatcherConfig.LongPollingIntervalInMs}");
-        logBuilder.AppendLine($"Task lock duration in ms: {dispatcherConfig.TaskLockDurationInMs}");
-        logBuilder.AppendLine($"Topic cache invalidation interval in minutes: {dispatcherConfig.TopicCacheInvalidationIntervalInMin}");
-
-        _logger.LogInformation(logBuilder.ToString());
-
+        
         return dispatcherConfig;
     }
 

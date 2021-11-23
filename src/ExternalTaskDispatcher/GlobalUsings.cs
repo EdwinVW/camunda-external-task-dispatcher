@@ -6,6 +6,7 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Net.Http;
 global using System.Collections.Generic;
+global using System.Text.RegularExpressions;
 global using Camunda.Api.Client;
 global using Camunda.Api.Client.ExternalTask;
 global using Microsoft.Azure.KeyVault;
