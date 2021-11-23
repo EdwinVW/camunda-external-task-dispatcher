@@ -25,16 +25,16 @@ services:
     environment:
       - Dispatcher__WorkerId=ExternalTaskDispatcher-353A4EBA-F420-4B40-A26D-B6BBEED1ED3E    
 
-  # external-task-dispatcher02:
-  #   image: edwinvw/external-task-dispatcher:1.0
-  #   container_name: cetd02
-  #   depends_on:
-  #     camunda:
-  #       condition: service_healthy
-  #   env_file:
-  #     - cetd-variables.env
-  #   environment:
-  #     - Dispatcher__WorkerId=ExternalTaskDispatcher-44F03C70-5EB2-4BED-8F05-C53779A397A6               
+  external-task-dispatcher02:
+    image: edwinvw/external-task-dispatcher:1.0
+    container_name: cetd02
+    depends_on:
+      camunda:
+        condition: service_healthy
+    env_file:
+      - cetd-variables.env
+    environment:
+      - Dispatcher__WorkerId=ExternalTaskDispatcher-44F03C70-5EB2-4BED-8F05-C53779A397A6               
 
 volumes:
   # sqlserverdata:
