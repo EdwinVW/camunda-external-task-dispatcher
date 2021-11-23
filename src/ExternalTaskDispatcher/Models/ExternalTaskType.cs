@@ -7,6 +7,5 @@ public enum ExternalTaskType
 {
     Unknown,
     Service,
-    Message,
-    Signal
+    Message
 }

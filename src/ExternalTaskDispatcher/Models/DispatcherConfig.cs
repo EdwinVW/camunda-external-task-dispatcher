@@ -16,7 +16,6 @@ public class DispatcherConfig
     public long TopicCacheInvalidationIntervalInMin { get; set; }
     public string ServiceTaskPrefix { get; set; }
     public string MessageTaskPrefix { get; set; }
-    public string SignalTaskPrefix { get; set; }
 
     /// <summary>
     /// Constructor that initializes all the defaults.
@@ -28,8 +27,7 @@ public class DispatcherConfig
         APIMUrl = string.Empty;
         APIMKey = string.Empty;
         Topics = new List<string>();
-        ServiceTaskPrefix = "Service-";
-        MessageTaskPrefix = "Message-";
-        SignalTaskPrefix = "Signal-";
+        ServiceTaskPrefix = "Svc-";
+        MessageTaskPrefix = "Msg-";
     }
 }

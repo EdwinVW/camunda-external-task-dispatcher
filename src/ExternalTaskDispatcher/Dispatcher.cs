@@ -151,7 +151,7 @@ public class Dispatcher : BackgroundService
         }
 
         // skip unsupported task types
-        if (extTaskType == ExternalTaskType.Message || extTaskType == ExternalTaskType.Signal)
+        if (extTaskType == ExternalTaskType.Message)
         {
             string errorMessage = $"External task with Id '{lockedTask.Id}' has unsupported task type '{extTaskType}'. Failing task.";
             _logger.LogInformation(errorMessage);
@@ -230,10 +230,6 @@ public class Dispatcher : BackgroundService
         else if (topicName.StartsWith(_dispatcherConfig.MessageTaskPrefix))
         {
             return ExternalTaskType.Message;
-        }
-        else if (topicName.StartsWith(_dispatcherConfig.SignalTaskPrefix))
-        {
-            return ExternalTaskType.Signal;
         }
         return ExternalTaskType.Unknown;
     }
