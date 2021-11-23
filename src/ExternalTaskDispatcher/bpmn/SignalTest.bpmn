@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1bcrael" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.9.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="Pcs-SignalTest" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1ho5vsz</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1ho5vsz" sourceRef="StartEvent_1" targetRef="Tsk-Wait" />
+    <bpmn:userTask id="Tsk-Wait" name="Wait">
+      <bpmn:incoming>Flow_1ho5vsz</bpmn:incoming>
+      <bpmn:outgoing>Flow_1t9f3p5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_1c5vg2e">
+      <bpmn:incoming>Flow_1t9f3p5</bpmn:incoming>
+      <bpmn:incoming>Flow_0cqaywm</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1t9f3p5" sourceRef="Tsk-Wait" targetRef="Event_1c5vg2e" />
+    <bpmn:boundaryEvent id="Sig-Test01" name="Sig-Test01" attachedToRef="Tsk-Wait">
+      <bpmn:outgoing>Flow_0cqaywm</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_0bri3pw" signalRef="Signal_1ywltyn" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_0cqaywm" sourceRef="Sig-Test01" targetRef="Event_1c5vg2e" />
+  </bpmn:process>
+  <bpmn:signal id="Signal_1ywltyn" name="Sig-Test01" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Pcs-SignalTest">
+      <bpmndi:BPMNEdge id="Flow_1t9f3p5_di" bpmnElement="Flow_1t9f3p5">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="432" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ho5vsz_di" bpmnElement="Flow_1ho5vsz">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cqaywm_di" bpmnElement="Flow_0cqaywm">
+        <di:waypoint x="320" y="175" />
+        <di:waypoint x="320" y="195" />
+        <di:waypoint x="450" y="195" />
+        <di:waypoint x="450" y="135" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_13d3bxa_di" bpmnElement="Tsk-Wait">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1c5vg2e_di" bpmnElement="Event_1c5vg2e">
+        <dc:Bounds x="432" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0e66nt9_di" bpmnElement="Sig-Test01">
+        <dc:Bounds x="302" y="139" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="254" y="173" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
