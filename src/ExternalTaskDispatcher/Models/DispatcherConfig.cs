@@ -29,6 +29,7 @@ public class DispatcherConfig
     /// </summary>
     public DispatcherConfig()
     {
+        _workerId = $"ETD-{CreateUniqueId()}";
         CamundaUrl = "http://camunda:8080/engine-rest";
         APIMUrl = string.Empty;
         APIMKey = string.Empty;
