@@ -44,7 +44,7 @@ public class Dispatcher : BackgroundService
         configuration.GetSection("Dispatcher").Bind(dispatcherConfig);
 
         //_apimKey = GetAPIMKey().Result ?? dispatcherConfig.APIMKey;
-        
+
         return dispatcherConfig;
     }
 
@@ -132,19 +132,21 @@ public class Dispatcher : BackgroundService
             return;
         }
 
-        // skip unsupported task types
-        if (extTaskType == ExternalTaskType.Message)
-        {
-            string errorMessage = $"External task with Id '{lockedTask.Id}' has unsupported task type '{extTaskType}'. Failing task.";
-            _logger.LogInformation(errorMessage);
-            await HandleFailureAsync(lockedTask, errorMessage, 0);
-            return;
-        }
-
-        // handle task
         try
         {
-            var outputVariables = await HandleServiceTaskAsync(lockedTask);
+            // handle task
+            var outputVariables = new Dictionary<string, VariableValue>();
+            switch (extTaskType)
+            {
+                case ExternalTaskType.Service:
+                    outputVariables = await HandleServiceTaskAsync(lockedTask);
+                    break;
+                case ExternalTaskType.Message:
+                    outputVariables = await HandleMessageTaskAsync(lockedTask);
+                    break;
+            }
+            
+            // complete task
             var complete = new CompleteExternalTask
             {
                 WorkerId = _dispatcherConfig.WorkerId,
@@ -240,6 +242,17 @@ public class Dispatcher : BackgroundService
 
         // handle response
         return await CreateResponseAsync(response);
+    }
+
+    /// <summary>
+    /// Handle an external task of type Message.
+    /// </summary>
+    /// <param name="lockedTask">The external task information.</param>
+    /// <returns>A dictionary with the variables returned from the external task implementation.</returns>
+    private Task<Dictionary<string, VariableValue>> HandleMessageTaskAsync(LockedExternalTask lockedTask)
+    {
+        _logger.LogInformation($"External task with Id '{lockedTask.Id}' has type 'Message'. Ignoring task.");
+        return Task.FromResult(new Dictionary<string, VariableValue>());
     }
 
     /// <summary>
