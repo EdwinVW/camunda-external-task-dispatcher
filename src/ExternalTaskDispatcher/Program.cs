@@ -7,6 +7,8 @@ Host
     .ConfigureServices((hostContext, services) =>
     {
         services.AddHttpClient();
+        services.AddSingleton<IServiceTaskHandler, AzureAPIMTaskHandler>();
+        services.AddSingleton<IMessageTaskHandler, AzureAPIMTaskHandler>();
         services.AddHostedService<Dispatcher>();
     })
     .Build()

@@ -14,8 +14,6 @@ public class DispatcherConfig
     }
 
     public string CamundaUrl { get; set; }
-    public string APIMUrl { get; set; }
-    public string APIMKey { get; set; }
     public List<string> Topics { get; set; }
     public bool AutomaticTopicDiscovery { get; set; }
     public long LongPollingIntervalInMs { get; set; }
@@ -27,16 +25,26 @@ public class DispatcherConfig
     /// <summary>
     /// Constructor that initializes all the defaults.
     /// </summary>
-    public DispatcherConfig()
+    private DispatcherConfig()
     {
         _workerId = $"ETD-{CreateUniqueId()}";
         CamundaUrl = "http://camunda:8080/engine-rest";
-        APIMUrl = string.Empty;
-        APIMKey = string.Empty;
         Topics = new List<string>();
         ServiceTaskPrefix = "Svc-";
         MessageTaskPrefix = "Msg-";
     }
+
+    /// <summary>
+    /// Create a filled DispatcherConfig instance.
+    /// </summary>
+    /// <param name="configuration">The .NET configuration.</param>
+    /// <returns>An initialized <see cref="DispatcherConfig"/> instance.</returns>
+    public static DispatcherConfig Build(IConfiguration configuration)
+    {
+        var config = new DispatcherConfig();
+        configuration.GetSection("Dispatcher").Bind(config);
+        return config;        
+    }    
 
     /// <summary>
     /// Log configuration.
@@ -45,12 +53,10 @@ public class DispatcherConfig
     public void Log(Microsoft.Extensions.Logging.ILogger logger)
     {
         var logBuilder = new StringBuilder();
-        logBuilder.AppendLine($"Configuration:");
-        logBuilder.AppendLine(new string('-', 35));
+        logBuilder.AppendLine($"Dispatcher Configuration:");
+        logBuilder.AppendLine(new string('-', 60));
         logBuilder.AppendLine($"Worker Id: {WorkerId}");
         logBuilder.AppendLine($"Camunda Url: {CamundaUrl}");
-        logBuilder.AppendLine($"APIM Url: {APIMUrl}");
-        logBuilder.AppendLine($"APIM Key: {new string('*', APIMKey.Length)}");
         logBuilder.AppendLine($"Pre-configured Topics:");
         foreach (string topic in Topics)
         {
@@ -60,6 +66,7 @@ public class DispatcherConfig
         logBuilder.AppendLine($"Long polling interval in ms: {LongPollingIntervalInMs}");
         logBuilder.AppendLine($"Task lock duration in ms: {TaskLockDurationInMs}");
         logBuilder.AppendLine($"Topic cache invalidation interval in minutes: {TopicCacheInvalidationIntervalInMin}");
+        logBuilder.AppendLine(new string('-', 60));
 
         logger.LogInformation(logBuilder.ToString());
     }

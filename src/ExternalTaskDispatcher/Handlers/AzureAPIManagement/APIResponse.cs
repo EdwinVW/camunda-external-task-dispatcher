@@ -1,4 +1,4 @@
-namespace ExternalTaskDispatcher.Models;
+namespace ExternalTaskDispatcher.Handlers.AzureAPIManagement;
 
 /// <summary>
 /// Represents a response from an API call.

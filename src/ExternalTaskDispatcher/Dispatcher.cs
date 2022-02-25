@@ -7,7 +7,8 @@ public class Dispatcher : BackgroundService
 {
     private DispatcherConfig _dispatcherConfig;
     private readonly ILogger<Dispatcher> _logger;
-    private readonly IHttpClientFactory _clientFactory;
+    private readonly IServiceTaskHandler _serviceTaskHandler;
+    private readonly IMessageTaskHandler _messsageTaskHandler;
     private List<string> _topics;
     private CamundaClient _camundaClient;
     private DateTime? _lastErrorTimeStamp;
@@ -19,33 +20,22 @@ public class Dispatcher : BackgroundService
     /// </summary>
     /// <param name="logger">The logger to use.</param>
     /// <param name="configuration">The .NET configuration.</param>
-    /// <param name="httpClientFactory">The factory for safelay creating HTTPClient instances.</param>
-    public Dispatcher(ILogger<Dispatcher> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public Dispatcher(
+        ILogger<Dispatcher> logger, 
+        IConfiguration configuration, 
+        IServiceTaskHandler serviceTaskHandler, 
+        IMessageTaskHandler messsageTaskHandler)
     {
         _logger = logger;
-        _clientFactory = httpClientFactory;
-        _dispatcherConfig = ReadConfig(configuration);
+        this._serviceTaskHandler = serviceTaskHandler;
+        this._messsageTaskHandler = messsageTaskHandler;
+        _dispatcherConfig = DispatcherConfig.Build(configuration);
         _dispatcherConfig.Log(logger);
         _topics = _dispatcherConfig.Topics;
         _camundaClient = CamundaClient.Create(_dispatcherConfig.CamundaUrl);
         _serializerSettings = new JsonSerializerSettings
         {
         };
-    }
-
-    /// <summary>
-    /// Read thesettings for the dispatcher from the configuration.
-    /// </summary>
-    /// <param name="configuration">The .NET configuration.</param>
-    /// <returns>An initialized <see cref="DispatcherConfig"/> instance.</returns>
-    private DispatcherConfig ReadConfig(IConfiguration configuration)
-    {
-        var dispatcherConfig = new DispatcherConfig();
-        configuration.GetSection("Dispatcher").Bind(dispatcherConfig);
-
-        //_apimKey = GetAPIMKey().Result ?? dispatcherConfig.APIMKey;
-
-        return dispatcherConfig;
     }
 
     /// <summary>
@@ -91,7 +81,7 @@ public class Dispatcher : BackgroundService
                 _logger.LogDebug($"Found {lockedTasks.Count} tasks");
                 foreach (var lockedTask in lockedTasks)
                 {
-                    await HandleTask(lockedTask);
+                    await HandleExternalTask(lockedTask);
                 }
             }
             catch (Exception ex)
@@ -115,7 +105,7 @@ public class Dispatcher : BackgroundService
     /// Handle a Camunda external task.
     /// </summary>
     /// <param name="lockedTask">The external task information.</param>
-    private async Task HandleTask(LockedExternalTask lockedTask)
+    private async Task HandleExternalTask(LockedExternalTask lockedTask)
     {
         _logger.LogInformation($"Received external task for topic '{lockedTask.TopicName}' with Id '{lockedTask.Id}'.");
 
@@ -139,10 +129,10 @@ public class Dispatcher : BackgroundService
             switch (extTaskType)
             {
                 case ExternalTaskType.Service:
-                    outputVariables = await HandleServiceTaskAsync(lockedTask);
+                    outputVariables = await _serviceTaskHandler.HandleServiceTaskAsync(lockedTask);
                     break;
                 case ExternalTaskType.Message:
-                    outputVariables = await HandleMessageTaskAsync(lockedTask);
+                    outputVariables = await _messsageTaskHandler.HandleMessageTaskAsync(lockedTask);
                     break;
             }
             
@@ -219,89 +209,6 @@ public class Dispatcher : BackgroundService
     }
 
     /// <summary>
-    /// Handle an external task of type ServiceTask.
-    /// </summary>
-    /// <param name="lockedTask">The external task information.</param>
-    /// <returns>A dictionary with the variables returned from the external task implementation.</returns>
-    private async Task<Dictionary<string, VariableValue>> HandleServiceTaskAsync(LockedExternalTask lockedTask)
-    {
-        _logger.LogInformation($"Handling external Service task for topic '{lockedTask.TopicName}' with Id '{lockedTask.Id}'.");
-
-        string requestUri = $"{_dispatcherConfig.APIMUrl}/{lockedTask.TopicName.ToLowerInvariant()}?taskId={lockedTask.Id}";
-        var client = _clientFactory.CreateClient();
-
-        // execute request
-        var content = CreateRequestContent(lockedTask);
-        var response = await client.PostAsync(requestUri, content);
-
-        // handle status-code
-        if (response.StatusCode != HttpStatusCode.OK)
-        {
-            throw new InvokeErrorException($"Invalid HTTP status-code {response.StatusCode}.");
-        }
-
-        // handle response
-        return await CreateResponseAsync(response);
-    }
-
-    /// <summary>
-    /// Handle an external task of type Message.
-    /// </summary>
-    /// <param name="lockedTask">The external task information.</param>
-    /// <returns>A dictionary with the variables returned from the external task implementation.</returns>
-    private Task<Dictionary<string, VariableValue>> HandleMessageTaskAsync(LockedExternalTask lockedTask)
-    {
-        _logger.LogInformation($"External task with Id '{lockedTask.Id}' has type 'Message'. Ignoring task.");
-        return Task.FromResult(new Dictionary<string, VariableValue>());
-    }
-
-    /// <summary>
-    /// Create a request for calling an API Management operation for an external task.
-    /// </summary>
-    /// <param name="lockedTask">The external task information.</param>
-    /// <returns>An initialized <see cref="HttpContent"/> instance.</returns>
-    private HttpContent CreateRequestContent(LockedExternalTask lockedTask)
-    {
-        string json = JsonConvert.SerializeObject(lockedTask.Variables,
-            typeof(Dictionary<string, VariableValue>), _serializerSettings);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        content.Headers.Add("Ocp-Apim-Subscription-Key", _dispatcherConfig.APIMKey);
-        return content;
-    }
-
-    /// <summary>
-    /// Create a response for completing an external service task.
-    /// </summary>
-    /// <param name="lockedTask">The external task information.</param>
-    /// <returns>A dictionary with the variables returned from the external task implementation.</returns>
-    private async Task<Dictionary<string, VariableValue>> CreateResponseAsync(HttpResponseMessage response)
-    {
-        var responseJson = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonConvert.DeserializeObject(responseJson,
-            typeof(APIResponse), _serializerSettings) as APIResponse;
-
-        // log variables
-        if (apiResponse != null && apiResponse.Variables != null)
-        {
-            try
-            {
-                _logger.LogDebug("Received variables:");
-                foreach (var item in apiResponse.Variables)
-                {
-                    _logger.LogDebug(" - {VariableName}:{VariableValue}", item.Key, item.Value);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug("Error while logging variables:");
-                _logger.LogDebug(ex.Message);
-            }
-            return apiResponse.Variables;
-        }
-        return new Dictionary<string, VariableValue>();
-    }
-
-    /// <summary>
     /// Handle a failure during the execution of an external task.
     /// </summary>
     /// <param name="lockedTask">The external task information.</param>
@@ -351,37 +258,5 @@ public class Dispatcher : BackgroundService
         {
             _logger.LogError(handleEx, $"Error while handling failure for {lockedTask.TopicName} task with Id: {lockedTask.Id}");
         }
-    }
-
-    /// <summary>
-    /// Get the API Management subscription key from an Azure KeyVault.
-    /// </summary>
-    /// <returns>The APIM subscription key of null when the key could not be retrieved from the Azure KeyVault.</returns>
-    private async Task<string?> GetAPIMKey()
-    {
-        int retries = 0;
-        while (retries < 5)
-        {
-            try
-            {
-                AzureServiceTokenProvider azureServiceTokenProvider = new AzureServiceTokenProvider();
-                var keyVaultClient = new KeyVaultClient(
-                    new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-                var secret = await keyVaultClient.GetSecretAsync(
-                    "https://acikeyvault.vault.azure.net/secrets/APIMKey").ConfigureAwait(false);
-                return secret.Value;
-            }
-            catch (Exception ex)
-            {
-                var logMessage = new StringBuilder($"Error while retrieving APIMKey from Azure Key Vault:");
-                logMessage.AppendLine($"{ex.Message}");
-                logMessage.AppendLine("Retrying in 2 sec. ...");
-                _logger.LogWarning(logMessage.ToString());
-                await Task.Delay(2000);
-                retries++;
-            }
-        }
-        _logger.LogError("Unable to retrieve APIMKey from Azure Key Vault.");
-        return null;
     }
 }
