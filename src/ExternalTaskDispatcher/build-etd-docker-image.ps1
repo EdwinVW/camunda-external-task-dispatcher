@@ -1,1 +1,1 @@
-docker build --force-rm -t edwinvw/external-task-dispatcher:1.0 .
+docker build --force-rm -t edwinw.azurecr.io/external-task-dispatcher:1.0 .

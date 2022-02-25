@@ -2,7 +2,7 @@ version: '3'
 services:
 
   camunda:
-    image: edwinvw/camunda-bpm-platform:1.0
+    image: edwinw.azurecr.io/camunda-bpm-platform:1.0
     container_name: camunda
     build: ../Camunda
     volumes:
@@ -16,7 +16,7 @@ services:
       retries: 60         
 
   external-task-dispatcher01:
-    image: edwinvw/external-task-dispatcher:1.0
+    image: edwinw.azurecr.io/external-task-dispatcher:1.0
     container_name: cetd01
     build: ../    
     depends_on:
@@ -26,7 +26,7 @@ services:
       - cetd-variables.env
 
   external-task-dispatcher02:
-    image: edwinvw/external-task-dispatcher:1.0
+    image: edwinw.azurecr.io/external-task-dispatcher:1.0
     container_name: cetd02
     build: ../
     depends_on:

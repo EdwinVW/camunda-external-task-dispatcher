@@ -1,1 +1,1 @@
-docker build --force-rm -t edwinvw/camunda-bpm-platform:1.0 ./Camunda
+docker build --force-rm -t edwinw.azurecr.io/camunda-bpm-platform:1.0 ./Camunda
