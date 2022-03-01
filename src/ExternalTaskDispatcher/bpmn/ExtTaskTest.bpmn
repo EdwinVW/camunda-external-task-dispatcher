@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0tpokow" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
-  <bpmn:process id="Pcs-ExternalTaskTest" name="External Task Test" isExecutable="true">
+  <bpmn:process id="pcs_ExternalTaskTest" name="External Task Test" isExecutable="true">
     <bpmn:sequenceFlow id="Flow_121pl9f" sourceRef="StartEvent_1" targetRef="Tsk-GetCustomerInfo" />
-    <bpmn:serviceTask id="Tsk-GetCustomerInfo" name="Get Customer Info" camunda:type="external" camunda:topic="Svc-GetCustomerInfo">
+    <bpmn:serviceTask id="Tsk-GetCustomerInfo" name="Get Customer Info" camunda:type="external" camunda:topic="svc_GetCustomerInfo">
       <bpmn:incoming>Flow_121pl9f</bpmn:incoming>
       <bpmn:outgoing>Flow_1mruald</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -19,7 +19,7 @@
       <bpmn:outgoing>Flow_121pl9f</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_1plizub" sourceRef="Activity_0xlxzm5" targetRef="Activity_1o6zygt" />
-    <bpmn:sendTask id="Activity_0xlxzm5" name="Loan request granted" camunda:type="external" camunda:topic="Msg-LoanRequestGranted">
+    <bpmn:sendTask id="Activity_0xlxzm5" name="Loan request granted" camunda:type="external" camunda:topic="msg_LoanRequestGranted">
       <bpmn:incoming>Flow_16oo05n</bpmn:incoming>
       <bpmn:outgoing>Flow_1plizub</bpmn:outgoing>
     </bpmn:sendTask>
@@ -32,7 +32,7 @@
   <bpmn:signal id="Signal_1e44v2t" name="Sig-Test01" />
   <bpmn:message id="Message_0vk9spd" name="Msg-Test01" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Pcs-ExternalTaskTest">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="pcs_ExternalTaskTest">
       <bpmndi:BPMNEdge id="Flow_15rvq77_di" bpmnElement="Flow_15rvq77">
         <di:waypoint x="840" y="117" />
         <di:waypoint x="902" y="117" />
@@ -42,12 +42,12 @@
         <di:waypoint x="740" y="117" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_16oo05n_di" bpmnElement="Flow_16oo05n">
-        <di:waypoint x="540" y="117" />
+        <di:waypoint x="520" y="117" />
         <di:waypoint x="590" y="117" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1mruald_di" bpmnElement="Flow_1mruald">
         <di:waypoint x="370" y="117" />
-        <di:waypoint x="440" y="117" />
+        <di:waypoint x="420" y="117" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_121pl9f_di" bpmnElement="Flow_121pl9f">
         <di:waypoint x="215" y="117" />
@@ -59,9 +59,6 @@
       <bpmndi:BPMNShape id="Event_07pauwr_di" bpmnElement="Event_07pauwr">
         <dc:Bounds x="902" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1r2jkto_di" bpmnElement="Tsk-WaitForInput">
-        <dc:Bounds x="440" y="77" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
@@ -70,6 +67,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1o6zygt_di" bpmnElement="Activity_1o6zygt">
         <dc:Bounds x="740" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1r2jkto_di" bpmnElement="Tsk-WaitForInput">
+        <dc:Bounds x="420" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
