@@ -21,4 +21,5 @@ global using Serilog;
 global using ExternalTaskDispatcher;
 global using ExternalTaskDispatcher.Models;
 global using ExternalTaskDispatcher.Handlers;
+global using ExternalTaskDispatcher.Mappers;
 global using ExternalTaskDispatcher.Handlers.AzureAPIManagement;

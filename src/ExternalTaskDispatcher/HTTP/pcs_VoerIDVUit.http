@@ -3,7 +3,9 @@ Content-Type: application/json
 
 {
   "messageName" : "msg_IDVResultaatBeschikbaar",
-  "processInstanceId": "56d998d5-9935-11ec-a5e3-0242ac110005",
+  "correlationKeys" : {
+    "relatieNummer" : {"value" : "C123456", "type": "String"}
+  },
   "processVariables" : {
     "idvGeldig" : {"value" : true, "type": "Boolean"},
     "herIDVMogelijk": {"value" : false, "type": "Boolean"}

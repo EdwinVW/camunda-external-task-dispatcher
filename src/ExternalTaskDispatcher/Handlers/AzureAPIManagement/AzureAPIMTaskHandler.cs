@@ -4,6 +4,7 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
 {
     private AzureAPIMTaskHandlerConfig _config;
     private readonly ILogger<AzureAPIMTaskHandler> _logger;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IHttpClientFactory _clientFactory;
     private JsonSerializerSettings _serializerSettings;
 
@@ -13,16 +14,19 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
     /// <param name="logger">The logger to use.</param>
     /// <param name="configuration">The .NET configuration.</param>
     /// <param name="httpClientFactory">The factory for safelay creating HTTPClient instances.</param>
-    public AzureAPIMTaskHandler(ILogger<AzureAPIMTaskHandler> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+    public AzureAPIMTaskHandler(ILogger<AzureAPIMTaskHandler> logger, IConfiguration configuration, IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
+        _serviceProvider = serviceProvider;
         _clientFactory = httpClientFactory;
         _config = AzureAPIMTaskHandlerConfig.Build(configuration);
+
         // get APIM Key from Key Vault
         if (!string.IsNullOrEmpty(_config.APIMKeySecretUrl))
         {
             _config.APIMKey = GetAPIMKey().Result ?? _config.APIMKey;
         }
+
         _config.Log(logger);
         _serializerSettings = new JsonSerializerSettings
         {
@@ -44,7 +48,10 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
         _logger.LogInformation($"Request Uri: '{requestUri}'");
 
         // execute request
-        var content = CreateRequestContent(lockedTask);
+        var mapper = Getmapper(lockedTask);
+        var json = mapper.CreateRequestJson(lockedTask);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        content.Headers.Add("Ocp-Apim-Subscription-Key", _config.APIMKey);
         var response = await client.PostAsync(requestUri, content);
 
         // handle status-code
@@ -54,7 +61,10 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
         }
 
         // handle response
-        return await CreateResponseAsync(response);
+        var camundaResponse = await mapper.CreateCamundaResponseAsync(response);
+        LogVariables(camundaResponse);
+
+        return camundaResponse!;
     }
 
     /// <summary>
@@ -64,44 +74,49 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
     /// <returns>A dictionary with the variables returned from the external task implementation.</returns>
     public Task<Dictionary<string, VariableValue>> HandleMessageTaskAsync(LockedExternalTask lockedTask)
     {
+        // TODO: add message implementation (send to servicebus / kafka)
+
         _logger.LogInformation($"External task with Id '{lockedTask.Id}' has type 'Message'. Ignoring task.");
         return Task.FromResult(new Dictionary<string, VariableValue>());
     }
 
     /// <summary>
-    /// Create a request for calling an API Management operation for an external task.
+    /// Get the request-/response-mapper for the specified external task.
     /// </summary>
-    /// <param name="lockedTask">The external task information.</param>
-    /// <returns>An initialized <see cref="HttpContent"/> instance.</returns>
-    private HttpContent CreateRequestContent(LockedExternalTask lockedTask)
+    /// <param name="lockedTask">The external task to get the mapper for.</param>
+    private IExternalTaskMapper Getmapper(LockedExternalTask lockedTask)
     {
-        string json = JsonConvert.SerializeObject(lockedTask.Variables,
-            typeof(Dictionary<string, VariableValue>), _serializerSettings);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        content.Headers.Add("Ocp-Apim-Subscription-Key", _config.APIMKey);
-        return content;
+        var mapperTypeName = $"ExternalTaskDispatcher.Mappers.{lockedTask.TopicName}Mapper";
+
+        _logger.LogDebug($"Resolve external-task mapper type '{mapperTypeName}'.");
+
+        Type? mapperType = Type.GetType(mapperTypeName);
+        if (mapperType == null)
+        {
+            throw new NotSupportedException($"External-task mapper type '{mapperTypeName}' not found in assembly.");
+        }
+        var mapper = _serviceProvider.GetRequiredService(mapperType);
+        if (mapper == null)
+        {
+            throw new NotSupportedException($"External-task mapper '{mapperTypeName}' could be resolved.");
+        }
+        return (IExternalTaskMapper)mapper;
     }
 
     /// <summary>
-    /// Create a response for completing an external service task.
+    /// Log the variables in a Camunda response.
     /// </summary>
-    /// <param name="lockedTask">The external task information.</param>
-    /// <returns>A dictionary with the variables returned from the external task implementation.</returns>
-    private async Task<Dictionary<string, VariableValue>> CreateResponseAsync(HttpResponseMessage response)
+    /// <param name="camundaResponse">The response to log.</param>
+    private void LogVariables(Dictionary<string, VariableValue> camundaResponse)
     {
-        var responseJson = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonConvert.DeserializeObject(responseJson,
-            typeof(APIResponse), _serializerSettings) as APIResponse;
-
-        // log variables
-        if (apiResponse != null && apiResponse.Variables != null)
+        if (camundaResponse != null && camundaResponse.Any())
         {
             try
             {
                 _logger.LogDebug("Received variables:");
-                foreach (var item in apiResponse.Variables)
+                foreach (var item in camundaResponse)
                 {
-                    _logger.LogDebug(" - {VariableName}:{VariableValue}", item.Key, item.Value);
+                    _logger.LogDebug($" - {item.Key}:{item.Value}");
                 }
             }
             catch (Exception ex)
@@ -109,10 +124,8 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
                 _logger.LogDebug("Error while logging variables:");
                 _logger.LogDebug(ex.Message);
             }
-            return apiResponse.Variables;
         }
-        return new Dictionary<string, VariableValue>();
-    }
+    }    
 
     /// <summary>
     /// Get the API Management subscription key from an Azure KeyVault.
