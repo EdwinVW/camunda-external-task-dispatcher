@@ -17,6 +17,7 @@ Host
         services.AddTransient<svc_MaakKlantRisicoDossierAanMapper>();
         services.AddTransient<svc_BepaalLopendContractMapper>();
         services.AddTransient<svc_SluitKlantRisicoDossierMapper>();
+        services.AddTransient<svc_GetCustomerInfoMapper>();
 
         // register External MessageTask request/response mappers
         // TODO
