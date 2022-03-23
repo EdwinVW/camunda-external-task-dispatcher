@@ -13,11 +13,7 @@ Host
         services.AddSingleton<IMessageTaskHandler, AzureAPIMTaskHandler>();
 
         // register External ServiceTask request/response mappers
-        services.AddTransient<svc_BepaalLopendKlantRisicoDossierMapper>();
-        services.AddTransient<svc_MaakKlantRisicoDossierAanMapper>();
-        services.AddTransient<svc_BepaalLopendContractMapper>();
-        services.AddTransient<svc_SluitKlantRisicoDossierMapper>();
-        services.AddTransient<svc_GetCustomerInfoMapper>();
+        services.AddTransient<ExternalTaskMapperBase>();
 
         // register External MessageTask request/response mappers
         // TODO

@@ -1,5 +1,8 @@
 namespace ExternalTaskDispatcher.Handlers.AzureAPIManagement;
 
+/// <summary>
+/// External Task Handler that calls REST operations on an API defined in Azure API Management.
+/// </summary>
 public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
 {
     private AzureAPIMTaskHandlerConfig _config;
@@ -93,12 +96,15 @@ public class AzureAPIMTaskHandler : IServiceTaskHandler, IMessageTaskHandler
         Type? mapperType = Type.GetType(mapperTypeName);
         if (mapperType == null)
         {
-            throw new NotSupportedException($"External-task mapper type '{mapperTypeName}' not found in assembly.");
+            _logger.LogDebug($"Specific external-task mapper for '{lockedTask.TopicName}' not found. Falling back to ExternalTaskMapperBase.");
+
+            mapperTypeName = $"ExternalTaskDispatcher.Mappers.ExternalTaskMapperBase";
+            mapperType = Type.GetType(mapperTypeName);
         }
-        var mapper = _serviceProvider.GetRequiredService(mapperType);
+        var mapper = _serviceProvider.GetRequiredService(mapperType!);
         if (mapper == null)
         {
-            throw new NotSupportedException($"External-task mapper '{mapperTypeName}' could be resolved.");
+            throw new NotSupportedException($"External-task mapper '{mapperTypeName}' could be resolved. Check whether or not it is registered for dependency intection.");
         }
         return (IExternalTaskMapper)mapper;
     }

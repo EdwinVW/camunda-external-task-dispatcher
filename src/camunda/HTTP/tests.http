@@ -1,0 +1,67 @@
+#########################################################################
+# External Service-task test
+#########################################################################
+
+POST http://localhost:8080/engine-rest/external-task/fetchAndLock
+Content-Type: application/json
+
+{
+  "workerId": "ETD-a1d0d3dd-193f-4ae0-ad4c-68888b8844e7",
+  "maxTasks": 1,
+  "usePriority": true,
+  "topics": [
+    {
+      "topicName": "svc_GetCustomerInfo",
+      "lockDuration": 60000
+    }
+  ]
+}
+
+###
+
+@taskId = 4d325724-aa6b-11ec-9e20-0242ac110005
+
+POST http://localhost:8080/engine-rest/external-task/{{taskId}}/complete
+Content-Type: application/json
+
+{
+  "workerId": "ETD-a1d0d3dd-193f-4ae0-ad4c-68888b8844e7",
+  "variables": {
+    "aVariable": { "value": "aStringValue" },
+    "anotherVariable": { "value": 42 },
+    "aThirdVariable": { "value": true }
+  }
+}
+
+#########################################################################
+# Message test
+#########################################################################
+
+@processInstanceId = 68aa21ba-aa6d-11ec-9e20-0242ac110005
+
+POST http://localhost:8080/engine-rest/message
+Content-Type: application/json
+
+{
+  "messageName" : "msg_Test01",
+  "processInstanceId": "{{processInstanceId}}",
+  "processVariables" : {
+    "aVariable" : { "value" : "aNewValue",  "type": "String" },
+    "anotherVariable" : { "value" : true, "type": "Boolean" }
+  }
+}
+
+#########################################################################
+# Signal test
+#########################################################################
+
+POST http://localhost:8080/engine-rest/signal
+Content-Type: application/json
+
+{
+  "name" : "sig_Test01",
+  "variables" : {
+    "aVariable" : { "value" : "aNewValue",  "type": "String" },
+    "anotherVariable" : { "value" : true, "type": "Boolean" }
+  }
+}

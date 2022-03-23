@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1bcrael" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.12.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="pcs_MessageTest" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1ho5vsz</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1ho5vsz" sourceRef="StartEvent_1" targetRef="tsk_Wait" />
+    <bpmn:userTask id="tsk_Wait" name="Wait">
+      <bpmn:incoming>Flow_1ho5vsz</bpmn:incoming>
+      <bpmn:outgoing>Flow_1t9f3p5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_1c5vg2e">
+      <bpmn:incoming>Flow_10cao2s</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1t9f3p5" sourceRef="tsk_Wait" targetRef="tsk_WaitAgain" />
+    <bpmn:boundaryEvent id="msg_Test01" name="msg_Test01" attachedToRef="tsk_Wait">
+      <bpmn:outgoing>Flow_1mx1j5i</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1puby1h" messageRef="Message_08tlosp" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_1mx1j5i" sourceRef="msg_Test01" targetRef="tsk_WaitAgain" />
+    <bpmn:sequenceFlow id="Flow_10cao2s" sourceRef="tsk_WaitAgain" targetRef="Event_1c5vg2e" />
+    <bpmn:userTask id="tsk_WaitAgain" name="Wait again">
+      <bpmn:incoming>Flow_1t9f3p5</bpmn:incoming>
+      <bpmn:incoming>Flow_1mx1j5i</bpmn:incoming>
+      <bpmn:outgoing>Flow_10cao2s</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmn:signal id="Signal_1ywltyn" name="Sig-Test01" />
+  <bpmn:message id="Message_08tlosp" name="msg_Test01" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="pcs_MessageTest">
+      <bpmndi:BPMNEdge id="Flow_1mx1j5i_di" bpmnElement="Flow_1mx1j5i">
+        <di:waypoint x="320" y="175" />
+        <di:waypoint x="320" y="195" />
+        <di:waypoint x="480" y="195" />
+        <di:waypoint x="480" y="157" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1t9f3p5_di" bpmnElement="Flow_1t9f3p5">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="430" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ho5vsz_di" bpmnElement="Flow_1ho5vsz">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10cao2s_di" bpmnElement="Flow_10cao2s">
+        <di:waypoint x="530" y="117" />
+        <di:waypoint x="612" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_13d3bxa_di" bpmnElement="tsk_Wait">
+        <dc:Bounds x="270" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1c5vg2e_di" bpmnElement="Event_1c5vg2e">
+        <dc:Bounds x="612" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02al6m2_di" bpmnElement="tsk_WaitAgain">
+        <dc:Bounds x="430" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_07foq3d_di" bpmnElement="msg_Test01">
+        <dc:Bounds x="302" y="139" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="250" y="173" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

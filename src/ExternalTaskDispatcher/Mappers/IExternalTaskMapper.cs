@@ -1,5 +1,9 @@
 namespace ExternalTaskDispatcher.Mappers;
 
+/// <summary>
+/// Mapper for mapping External-task variables to an HTTP request 
+/// and an HTTP response back top Camunda variables.
+/// </summary>
 public interface IExternalTaskMapper
 {
     /// <summary>
